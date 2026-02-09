@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>For Sushii</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&family=Playfair+Display:ital,wght@0,400;600;1,400&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --bg-deep: #000000;
+            --text-gold: #E6D5B8;
+            --text-gold-bright: #FFF0D4;
+            --accent-warm: #C69C6D;
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --ease-cinematic: cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        body {
+            background-color: var(--bg-deep);
+            color: var(--text-gold);
+            font-family: 'Inter', sans-serif;
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* --- UTILS --- */
+        .hidden { display: none !important; }
+        .fade-in { animation: fadeIn 1.2s ease forwards; }
+        .fade-out { animation: fadeOut 1s ease forwards; }
+        
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes fadeOut { from { opacity: 1; } to { opacity: 0; } }
+
+        .cinematic-text {
+            font-family: 'Playfair Display', serif;
+            letter-spacing: 0.03em;
+            text-align: center;
+            line-height: 1.4;
+        }
+
+        /* --- 1. OPENING --- */
+        #layer-opening {
+            position: fixed;
+            inset: 0;
+            z-index: 100;
+            background: black;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .intro-text {
+            font-size: 1.4rem;
+            color: white;
+            opacity: 0;
+            transform: translateY(10px);
+            transition: opacity 1.5s ease, transform 1.5s ease;
+        }
+
+        /* --- 2. LOADER --- */
+        #layer-loader {
+            position: fixed;
+            inset: 0;
+            z-index: 90;
+            background: black;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .loader-track {
+            width: 180px;
+            height: 2px;
+            background: rgba(255,255,255,0.1);
+            position: relative;
+            overflow: hidden;
+            border-radius: 2px;
+        }
+
+        .loader-fill {
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 100%;
+            width: 0%;
+            background: var(--text-gold);
+            box-shadow: 0 0 15px var(--accent-warm);
+            transition: width 3s cubic-bezier(0.45, 0, 0.55, 1);
+        }
+
+        /* --- 3. GATE --- */
+        #layer-gate {
+            position: fixed;
+            inset: 0;
+            z-index: 80;
+            background: black;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 2.5rem;
+        }
+
+        .btn-wrapper {
+            position: relative;
+            width: 100%;
+            height: 80px;
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+        }
+
+        .btn {
+            padding: 1rem 2.8rem;
+            background: rgba(255,255,255,0.06);
+            border: 1px solid var(--glass-border);
+            border-radius: 100px;
+            color: white;
+            font-family: 'Inter', sans-serif;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(12px);
+        }
+        
+        .btn:active { transform: scale(0.95); }
+
+        #btn-no { position: absolute; transition: transform 0.2s ease-out; }
+
+        /* --- 4. PASSWORD --- */
+        #layer-password {
+            position: fixed;
+            inset: 0;
+            z-index: 70;
+            background: black;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .input-card {
+            background: rgba(18, 18, 18, 0.8);
+            border: 1px solid var(--glass-border);
+            padding: 3rem 2rem;
+            border-radius: 24px;
+            text-align: center;
+            width: 85%;
+            max-width: 360px;
+            backdrop-filter: blur(20px);
+        }
+
+        .pass-digit {
+            background: transparent;
+            border: none;
+            border-bottom: 2px solid #333;
+            width: 80px;
+            font-size: 2.5rem;
+            color: var(--text-gold-bright);
+            text-align: center;
+            font-family: 'Playfair Display', serif;
+            margin: 2rem 0;
+            outline: none;
+            border-radius: 0;
+        }
+        .pass-digit:focus { border-bottom-color: var(--text-gold); }
+        
+        .shake-anim { animation: shake 0.4s ease-in-out; }
+        @keyframes shake { 0%,100% {transform:translateX(0)} 25% {transform:translateX(-6px)} 75% {transform:translateX(6px)} }
+
+        /* --- 5. VIDEO (FIXED) --- */
+        #layer-video {
+            position: fixed;
+            inset: 0;
+            z-index: 999; /* Force Top */
+            background: black;
+            display: none; /* JS toggles this */
+            opacity: 0;
+            transition: opacity 1s ease;
+        }
+
+        video {
+            width: 100%;
+            height: 100%;
+            object-fit: contain; /* Ensures entire video is seen */
+            background: black;
+        }
+        
+        .tap-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(0,0,0,0.6);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        /* --- 6. REVEAL --- */
+        #layer-reveal {
+            position: fixed;
+            inset: 0;
+            z-index: 60;
+            background: black;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            opacity: 0;
+        }
+
+        .teddy-photo {
+            width: 200px;
+            height: 200px;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.6);
+            border: 1px solid rgba(255,255,255,0.15);
+            margin-bottom: 2.5rem;
+            opacity: 0;
+            transform: translateY(30px);
+            transition: all 1.2s var(--ease-cinematic);
+        }
+        
+        .teddy-photo img { width: 100%; height: 100%; object-fit: cover; }
+
+        .name-row {
+            display: flex;
+            justify-content: center;
+            align-items: baseline;
+            gap: 3px;
+            margin-bottom: 2rem;
+            height: 3.5rem; 
+            overflow: hidden;
+        }
+
+        .char {
+            font-family: 'Playfair Display', serif;
+            font-size: 2.8rem;
+            font-weight: 500;
+            background: linear-gradient(180deg, #fff, #C69C6D);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            opacity: 0;
+            transform: translateY(100%);
+            display: inline-block;
+        }
+        
+        .char.visible { animation: charRise 1.2s var(--ease-cinematic) forwards; }
+        @keyframes charRise { to { opacity: 1; transform: translateY(0); } }
+
+        .msg-container {
+            text-align: center;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 1s ease 1s;
+        }
+
+        /* --- 7. EXIT (SHARP HUG) --- */
+        #layer-exit {
+            position: fixed;
+            inset: 0;
+            z-index: 110;
+            background: radial-gradient(circle at center, #111 0%, #000 90%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 1.5s ease;
+        }
+
+        /* NEW SHARP HUG ANIMATION */
+        .hug-stage {
+            position: relative;
+            width: 120px;
+            height: 120px;
+            margin-bottom: 3rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .heart-half {
+            position: absolute;
+            width: 60px;
+            height: 90px;
+            background: #E6D5B8;
+            border-radius: 50px 50px 0 0;
+            top: 15px;
+            transition: transform 1.5s var(--ease-cinematic);
+            box-shadow: 0 0 20px rgba(230, 213, 184, 0.3);
+        }
+
+        .left-half {
+            left: -40px; /* Start far left */
+            transform: rotate(-45deg);
+            border-radius: 50px 50px 0 0;
+            opacity: 0;
+        }
+
+        .right-half {
+            right: -40px; /* Start far right */
+            transform: rotate(45deg);
+            border-radius: 50px 50px 0 0;
+            opacity: 0;
+        }
+
+        /* The Animation State */
+        .hugging .left-half {
+            left: 28px; /* Center position */
+            opacity: 1;
+        }
+
+        .hugging .right-half {
+            right: 28px; /* Center position */
+            opacity: 1;
+        }
+
+        /* Pulse after join */
+        .hugging .hug-stage {
+            animation: heartBeat 2s infinite ease-in-out 1.5s;
+        }
+
+        @keyframes heartBeat {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); filter: drop-shadow(0 0 15px var(--accent-warm)); }
+            100% { transform: scale(1); }
+        }
+
+        .final-cta {
+            padding: 1rem 3rem;
+            border-radius: 50px;
+            background: linear-gradient(135deg, #fff2, #fff0);
+            border: 1px solid rgba(255,255,255,0.3);
+            color: white;
+            font-size: 1.1rem;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.5s ease;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+        }
+        
+    </style>
+</head>
+<body>
+
+    <div id="layer-opening">
+        <h1 class="intro-text cinematic-text" id="text-1">For today...</h1>
+        <h1 class="intro-text cinematic-text" id="text-2" style="display:none">I have something gentle for you.</h1>
+    </div>
+
+    <div id="layer-loader" class="hidden">
+        <div class="loader-track"><div class="loader-fill"></div></div>
+        <p style="margin-top:1.5rem; font-size:0.75rem; letter-spacing:0.3em; color:#666;">LOADING MOMENT</p>
+    </div>
+
+    <div id="layer-gate" class="hidden">
+        <h2 class="cinematic-text" style="font-size:1.6rem;">Ready for a soft surprise,<br>Sushii?</h2>
+        <div class="btn-wrapper">
+            <button id="btn-yes" class="btn">YES 🧸</button>
+            <button id="btn-no" class="btn">NO 🙈</button>
+        </div>
+    </div>
+
+    <div id="layer-password" class="hidden">
+        <div class="input-card">
+            <p class="cinematic-text" style="margin-bottom:1rem;">Private Access</p>
+            <input type="number" id="pass-input" placeholder="00" class="pass-digit" inputmode="numeric">
+            <p style="font-size:0.8rem; color:#888; letter-spacing:0.1em;">OUR SPECIAL MONTH</p>
+            <p id="error-text" style="color:#C69C6D; font-size:0.85rem; margin-top:1rem; opacity:0; transition:opacity 0.3s">Try again ❤️</p>
+        </div>
+    </div>
+
+    <div id="layer-video">
+        <video id="main-video" playsinline webkit-playsinline>
+            <source src="teddy-video.mp4" type="video/mp4">
+        </video>
+        <div class="tap-overlay hidden" id="tap-overlay">
+            <button class="btn" id="start-video-btn">Tap to Play ❤️</button>
+        </div>
+    </div>
+
+    <div id="layer-reveal" class="hidden">
+        <div class="teddy-photo" id="teddy-photo">
+            <img src="teddy.jpg" alt="Teddy" loading="lazy">
+        </div>
+
+        <div class="name-row" id="name-container">
+            </div>
+
+        <div class="msg-container cinematic-text" id="main-msg">
+            <h2 style="color:var(--text-gold-bright); margin-bottom:1rem; font-size:1.6rem;">Happy Teddy Day 🧸</h2>
+            <p style="margin-bottom:1rem; color:#ccc; line-height:1.6;">
+                Like this teddy,<br>I wish I could always hold you close,<br>and be your comfort.
+            </p>
+            <p style="color:#ccc;">You are my warmth.</p>
+        </div>
+    </div>
+
+    <div id="layer-exit" class="hidden">
+        <div class="hug-stage" id="hug-anim">
+            <div class="heart-half left-half"></div>
+            <div class="heart-half right-half"></div>
+        </div>
+
+        <div id="exit-text" style="text-align:center; opacity:0; transition:opacity 1s;">
+            <p class="cinematic-text" style="font-size:1.2rem; margin-bottom:0.5rem;">I wish I could give you this hug in person.</p>
+            <p style="color:#666; font-size:0.9rem;">But for now, this carries all my warmth.</p>
+        </div>
+
+        <button class="final-cta" id="wa-btn" style="margin-top:2rem;">Let’s go ❤️</button>
+    </div>
+
+    <script>
+        // --- CONFIGURATION ---
+        const CONFIG = {
+            pass: "12",
+            name: "Sushii",
+            phone: "917015897312", // No +, includes country code
+            waText: "I just saw the surprise..."
+        };
+
+        // --- UTILS ---
+        const wait = ms => new Promise(r => setTimeout(r, ms));
+        const get = id => document.getElementById(id);
+        
+        // --- FLOW ---
+
+        // 1. OPENING
+        window.onload = async () => {
+            await wait(500);
+            const t1 = get('text-1');
+            t1.style.opacity = 1;
+            t1.style.transform = 'translateY(0)';
+            
+            await wait(2500);
+            t1.style.opacity = 0;
+            
+            await wait(1000);
+            t1.style.display = 'none';
+            const t2 = get('text-2');
+            t2.style.display = 'block';
+            await wait(50);
+            t2.style.opacity = 1;
+            t2.style.transform = 'translateY(0)';
+
+            await wait(2500);
+            t2.style.opacity = 0;
+            await wait(1000);
+
+            get('layer-opening').classList.add('hidden');
+            get('layer-loader').classList.remove('hidden');
+            
+            // Start Loader
+            await wait(100);
+            document.querySelector('.loader-fill').style.width = '100%';
+            await wait(3000); // Load time
+            
+            get('layer-loader').classList.add('fade-out');
+            setTimeout(() => {
+                get('layer-loader').classList.add('hidden');
+                get('layer-gate').classList.remove('hidden');
+                get('layer-gate').classList.add('fade-in');
+            }, 1000);
+        };
+
+        // 2. GATE
+        const btnNo = get('btn-no');
+        const btnYes = get('btn-yes');
+        
+        const moveNo = () => {
+            const x = (Math.random() - 0.5) * 150;
+            const y = (Math.random() - 0.5) * 150;
+            btnNo.style.transform = `translate(${x}px, ${y}px)`;
+        };
+        
+        btnNo.addEventListener('touchstart', (e) => { e.preventDefault(); moveNo(); });
+        btnNo.addEventListener('mouseover', moveNo);
+        
+        btnYes.addEventListener('click', () => {
+            get('layer-gate').classList.add('hidden');
+            get('layer-password').classList.remove('hidden');
+            get('layer-password').classList.add('fade-in');
+        });
+
+        // 3. PASSWORD
+        const input = get('pass-input');
+        input.addEventListener('input', (e) => {
+            if(e.target.value.length === 2) {
+                if(e.target.value === CONFIG.pass) {
+                    input.blur();
+                    document.querySelector('.input-card').style.transform = 'scale(0.95)';
+                    document.querySelector('.input-card').style.opacity = '0';
+                    setTimeout(playVideo, 800);
+                } else {
+                    document.querySelector('.input-card').classList.add('shake-anim');
+                    get('error-text').style.opacity = 1;
+                    input.value = '';
+                    setTimeout(() => document.querySelector('.input-card').classList.remove('shake-anim'), 400);
+                }
+            }
+        });
+
+        // 4. VIDEO LOGIC (FIXED)
+        async function playVideo() {
+            get('layer-password').classList.add('hidden');
+            const vLayer = get('layer-video');
+            vLayer.style.display = 'flex'; // Important: set display first
+            
+            // Small delay to allow display:flex to render before opacity transition
+            await wait(50);
+            vLayer.style.opacity = 1;
+
+            const vid = get('main-video');
+            
+            try {
+                await vid.play();
+            } catch(e) {
+                // If autoplay blocked
+                get('tap-overlay').classList.remove('hidden');
+                get('start-video-btn').onclick = () => {
+                    get('tap-overlay').classList.add('hidden');
+                    vid.play();
+                };
+            }
+
+            vid.onended = () => {
+                vLayer.style.opacity = 0;
+                setTimeout(() => {
+                    vLayer.style.display = 'none';
+                    showReveal();
+                }, 1000);
+            };
+        }
+
+        // 5. REVEAL
+        async function showReveal() {
+            const rLayer = get('layer-reveal');
+            rLayer.classList.remove('hidden');
+            // Force reflow
+            void rLayer.offsetWidth;
+            rLayer.style.opacity = 1;
+
+            // Image
+            get('teddy-photo').style.opacity = 1;
+            get('teddy-photo').style.transform = 'translateY(0)';
+            
+            await wait(1000);
+
+            // Name
+            const nameC = get('name-container');
+            [...CONFIG.name].forEach((l, i) => {
+                const s = document.createElement('span');
+                s.innerText = l;
+                s.className = 'char';
+                s.style.animationDelay = (i * 0.1) + 's';
+                nameC.appendChild(s);
+                setTimeout(() => s.classList.add('visible'), 50);
+            });
+
+            await wait(1500);
+            
+            // Msg
+            get('main-msg').style.opacity = 1;
+            get('main-msg').style.transform = 'translateY(0)';
+
+            // Move to Exit
+            setTimeout(showExit, 6000);
+        }
+
+        // 6. EXIT (SHARP HUG)
+        async function showExit() {
+            const rLayer = get('layer-reveal');
+            rLayer.style.opacity = 0;
+            await wait(1000);
+            rLayer.classList.add('hidden');
+            
+            const eLayer = get('layer-exit');
+            eLayer.classList.remove('hidden');
+            eLayer.style.pointerEvents = 'auto';
+            await wait(50);
+            eLayer.style.opacity = 1;
+
+            // Trigger Hug
+            await wait(500);
+            get('hug-anim').classList.add('hugging');
+
+            await wait(2500);
+            get('exit-text').style.opacity = 1;
+
+            await wait(1500);
+            const btn = get('wa-btn');
+            btn.style.opacity = 1;
+            btn.style.transform = 'translateY(0)';
+            
+            btn.onclick = () => {
+                window.location.href = `https://wa.me/${CONFIG.phone}?text=${encodeURIComponent(CONFIG.waText)}`;
+            };
+        }
+
+    </script>
+</body>
+</html>
