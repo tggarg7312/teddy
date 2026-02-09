@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>For Sushii</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400&family=Playfair+Display:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+
+    <style>
+        /* CORE DESIGN */
+        :root {
+            --bg-color: #0a0a0a;
+            --text-color: #f0f0f0;
+            --gold-accent: #d4af37;
+            --glass-bg: rgba(255, 255, 255, 0.03);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --ease-apple: cubic-bezier(0.25, 1, 0.5, 1);
+            --ease-cinematic: cubic-bezier(0.65, 0, 0.35, 1);
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+        body { background-color: var(--bg-color); color: var(--text-color); font-family: 'Inter', sans-serif; overflow: hidden; height: 100vh; width: 100vw; display: flex; justify-content: center; align-items: center; perspective: 1000px; }
+        
+        .ambient-glow { position: absolute; width: 150vw; height: 150vh; background: radial-gradient(circle at center, #1a1515 0%, #000000 70%); z-index: -2; animation: pulseGlow 10s infinite alternate ease-in-out; }
+        
+        .scene { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; opacity: 0; pointer-events: none; transition: opacity 1.5s var(--ease-cinematic), transform 1.5s var(--ease-cinematic); padding: 2rem; text-align: center; }
+        .scene.active { opacity: 1; pointer-events: all; }
+        
+        h1, h2 { font-family: 'Playfair Display', serif; font-weight: 400; letter-spacing: -0.02em; }
+        p { font-weight: 300; line-height: 1.6; letter-spacing: 0.02em; color: rgba(255, 255, 255, 0.8); }
+
+        /* SCENE 1 */
+        #scene-opening h1 { font-size: clamp(1.5rem, 4vw, 2.5rem); background: linear-gradient(90deg, #fff 0%, #dcdcdc 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; opacity: 0; transform: translateY(10px); animation: textFadeIn 2s var(--ease-cinematic) forwards 0.5s; }
+        .light-pass { position: absolute; top: 0; left: -100%; width: 50%; height: 100%; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent); transform: skewX(-20deg); pointer-events: none; }
+
+        /* SCENE 2 */
+        .loader-text { font-family: 'Inter', sans-serif; font-size: 0.9rem; letter-spacing: 0.2em; text-transform: uppercase; margin-bottom: 20px; opacity: 0.7; }
+        .loader-track { width: 200px; height: 1px; background: rgba(255,255,255,0.1); position: relative; overflow: hidden; }
+        .loader-fill { position: absolute; left: 0; top: 0; height: 100%; width: 100%; background: linear-gradient(90deg, transparent, #fff, transparent); transform: translateX(-100%); animation: shimmerLoad 3s var(--ease-cinematic) forwards; }
+
+        /* SCENE 3 */
+        .gate-question { font-size: clamp(1.5rem, 3vw, 2rem); margin-bottom: 3rem; }
+        .button-container { display: flex; gap: 2rem; position: relative; }
+        .btn { padding: 1rem 2.5rem; border-radius: 50px; border: 1px solid rgba(255,255,255,0.2); background: transparent; color: white; font-family: 'Inter', sans-serif; font-size: 1rem; cursor: pointer; transition: all 0.4s var(--ease-apple); backdrop-filter: blur(10px); }
+        .btn-primary { background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.4); }
+        .btn:hover { background: rgba(255,255,255,0.15); transform: scale(1.05); }
+
+        /* SCENE 4 */
+        .glass-card { background: var(--glass-bg); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid var(--glass-border); padding: 3rem 2rem; border-radius: 20px; box-shadow: 0 20px 40px rgba(0,0,0,0.4); width: 90%; max-width: 400px; display: flex; flex-direction: column; gap: 1.5rem; transform: translateY(20px); opacity: 0; animation: cardEnter 1s var(--ease-apple) forwards; }
+        .input-group { position: relative; width: 100%; }
+        input { width: 100%; background: transparent; border: none; border-bottom: 1px solid rgba(255,255,255,0.3); color: #fff; font-size: 1.5rem; text-align: center; padding: 10px; font-family: 'Inter', sans-serif; letter-spacing: 0.5em; outline: none; transition: border-color 0.3s; }
+        input:focus { border-color: #fff; }
+        .error-msg { color: #ffb4b4; font-size: 0.9rem; min-height: 1.5em; opacity: 0; transition: opacity 0.3s; }
+        .hint { font-size: 0.8rem; color: rgba(255,255,255,0.4); margin-top: -10px; }
+
+        /* SCENE 5 */
+        #scene-video { background: #000; }
+        .video-wrapper { width: 100%; max-width: 1000px; border-radius: 12px; overflow: hidden; box-shadow: 0 0 50px rgba(0,0,0,0.5); position: relative; opacity: 0; transition: opacity 2s ease; }
+        video { width: 100%; display: block; border-radius: 12px; }
+        .unmute-hint { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); background: rgba(255,255,255,0.9); color: black; padding: 12px 24px; border-radius: 30px; font-weight: 600; font-size: 0.9rem; pointer-events: none; transition: opacity 0.5s; box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
+
+        /* SCENE 6 */
+        .reveal-container { display: flex; flex-direction: column; align-items: center; gap: 2rem; max-width: 600px; padding-bottom: 50px; }
+        .teddy-img { width: 200px; height: 200px; object-fit: cover; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); opacity: 0; transform: translateY(30px); animation: float 6s ease-in-out infinite; }
+        .name-reveal { font-family: 'Playfair Display', serif; font-size: 3.5rem; color: var(--gold-accent); display: flex; gap: 2px; }
+        .char { opacity: 0; display: inline-block; transform: translateY(20px); text-shadow: 0 0 15px rgba(212, 175, 55, 0.3); }
+        .final-msg { font-family: 'Inter', sans-serif; font-size: 1.1rem; color: rgba(255,255,255,0.9); text-align: center; opacity: 0; transform: translateY(20px); white-space: pre-line; line-height: 1.8; }
+        .particles { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: -1; }
+        .particle { position: absolute; background: rgba(255,215,0,0.3); border-radius: 50%; animation: rise 10s infinite linear; }
+
+        @keyframes pulseGlow { 0% { transform: scale(1); opacity: 0.5; } 100% { transform: scale(1.1); opacity: 0.8; } }
+        @keyframes textFadeIn { 0% { opacity: 0; filter: blur(10px); transform: translateY(10px); } 100% { opacity: 1; filter: blur(0); transform: translateY(0); } }
+        @keyframes shimmerLoad { 0% { transform: translateX(-100%); } 50% { transform: translateX(-20%); } 100% { transform: translateX(0%); } }
+        @keyframes cardEnter { to { opacity: 1; transform: translateY(0); } }
+        @keyframes shake { 10%, 90% { transform: translate3d(-1px, 0, 0); } 20%, 80% { transform: translate3d(2px, 0, 0); } 30%, 50%, 70% { transform: translate3d(-4px, 0, 0); } 40%, 60% { transform: translate3d(4px, 0, 0); } }
+        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-15px); } }
+        @keyframes charRise { to { opacity: 1; transform: translateY(0); } }
+        @keyframes rise { 0% { transform: translateY(100vh) scale(0); opacity: 0; } 50% { opacity: 1; } 100% { transform: translateY(-10vh) scale(1); opacity: 0; } }
+    </style>
+</head>
+<body>
+
+    <div class="ambient-glow"></div>
+
+    <div id="scene-opening" class="scene active">
+        <h1>Tonight… I have something for you.</h1>
+        <div class="light-pass"></div>
+    </div>
+
+    <div id="scene-loader" class="scene">
+        <div class="loader-text">Preparing a moment you’ll feel</div>
+        <div class="loader-track"><div class="loader-fill"></div></div>
+    </div>
+
+    <div id="scene-gate" class="scene">
+        <h2 class="gate-question">Ready for a soft surprise, Sushii?</h2>
+        <div class="button-container">
+            <button class="btn btn-primary" id="btn-yes">YES 🧸</button>
+            <button class="btn" id="btn-no">NO 🙈</button>
+        </div>
+    </div>
+
+    <div id="scene-password" class="scene">
+        <div class="glass-card" id="password-card">
+            <h2>Private Access</h2>
+            <div class="input-group">
+                <input type="number" id="pass-input" placeholder="Passcode" inputmode="numeric">
+            </div>
+            <p class="hint">Hint: our special month</p>
+            <p class="error-msg" id="error-msg">That doesn’t look like our month… try again ❤️</p>
+        </div>
+    </div>
+
+    <div id="scene-video" class="scene">
+        <div class="video-wrapper">
+            <video id="main-video" playsinline webkit-playsinline>
+                <source src="teddy-video.mp4" type="video/mp4">
+            </video>
+            <div class="unmute-hint" id="unmute-hint">Tap screen to start video</div>
+        </div>
+    </div>
+
+    <div id="scene-final" class="scene">
+        <div class="particles" id="particles"></div>
+        <div class="reveal-container">
+            <img src="teddy.jpg" alt="Teddy" class="teddy-img" id="teddy-img">
+            <div class="name-reveal" id="name-container"></div>
+            <div class="final-msg" id="final-msg">
+                Happy Teddy Day 🧸
+                
+                Just like this teddy,
+                I wish I could always be there to hold you,
+                comfort you,
+                and make you smile.
+
+                You are my warmth,
+                my safe place,
+                my favorite feeling.
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const scenes = {
+            opening: document.getElementById('scene-opening'),
+            loader: document.getElementById('scene-loader'),
+            gate: document.getElementById('scene-gate'),
+            password: document.getElementById('scene-password'),
+            video: document.getElementById('scene-video'),
+            final: document.getElementById('scene-final')
+        };
+
+        function switchScene(from, to) {
+            from.classList.remove('active');
+            setTimeout(() => {
+                from.style.display = 'none';
+                to.style.display = 'flex';
+                requestAnimationFrame(() => { to.classList.add('active'); });
+            }, 1000);
+        }
+
+        // 1. Opening
+        window.addEventListener('load', () => {
+            document.querySelector('.light-pass').animate([{ left: '-100%' }, { left: '200%' }], { duration: 2000, delay: 2000, easing: 'cubic-bezier(0.4, 0, 0.2, 1)' });
+            setTimeout(() => { switchScene(scenes.opening, scenes.loader); startLoader(); }, 4500);
+        });
+
+        // 2. Loader
+        function startLoader() { setTimeout(() => { switchScene(scenes.loader, scenes.gate); }, 3500); }
+
+        // 3. Gate
+        const noBtn = document.getElementById('btn-no'), yesBtn = document.getElementById('btn-yes');
+        let attempts = 0;
+        function dodge() {
+            attempts++;
+            noBtn.style.transform = `translate(${(Math.random()-0.5)*150}px, ${(Math.random()-0.5)*150}px)`;
+            yesBtn.style.transform = `scale(${1 + attempts*0.1})`;
+        }
+        noBtn.addEventListener('mouseover', dodge);
+        noBtn.addEventListener('touchstart', (e) => { e.preventDefault(); dodge(); });
+        yesBtn.addEventListener('click', () => { switchScene(scenes.gate, scenes.password); });
+
+        // 4. Password
+        const passInput = document.getElementById('pass-input'), errorMsg = document.getElementById('error-msg'), card = document.getElementById('password-card');
+        passInput.addEventListener('input', (e) => {
+            if (e.target.value === '12') {
+                passInput.blur();
+                switchScene(scenes.password, scenes.video);
+                initVideo();
+            } else if (e.target.value.length >= 2) {
+                card.style.animation = 'none'; card.offsetHeight; card.style.animation = 'shake 0.5s';
+                errorMsg.style.opacity = '1';
+                setTimeout(() => { e.target.value = ''; errorMsg.style.opacity = '0'; }, 1500);
+            }
+        });
+
+        // 5. Video (UPDATED & FIXED)
+        function initVideo() {
+            const video = document.getElementById('main-video');
+            const wrapper = document.querySelector('.video-wrapper');
+            const hint = document.getElementById('unmute-hint');
+
+            // SKIP IF VIDEO IS BROKEN
+            video.addEventListener('error', () => {
+                console.log("Video missing, skipping...");
+                switchScene(scenes.video, scenes.final);
+                runFinalReveal();
+            });
+
+            // FORCE FULL SCREEN VIDEO FEEL
+            setTimeout(() => {
+                wrapper.style.opacity = '1';
+                video.play().catch(() => {
+                    // If autoplay fails, we wait for the click below
+                    hint.style.opacity = '1';
+                });
+            }, 1000);
+
+            // CLICK ANYWHERE TO PLAY & UNMUTE
+            wrapper.addEventListener('click', () => {
+                video.muted = false;
+                video.play();
+                hint.style.opacity = '0';
+            });
+
+            video.addEventListener('ended', () => {
+                wrapper.style.opacity = '0';
+                setTimeout(() => { switchScene(scenes.video, scenes.final); runFinalReveal(); }, 2000);
+            });
+        }
+
+        // 6. Reveal
+        function runFinalReveal() {
+            const img = document.getElementById('teddy-img');
+            setTimeout(() => { img.style.opacity = '1'; img.style.transform = 'translateY(0)'; }, 500);
+
+            const nameContainer = document.getElementById('name-container');
+            "Sushii".split('').forEach((char, i) => {
+                const span = document.createElement('span');
+                span.textContent = char;
+                span.className = 'char';
+                span.style.animation = `charRise 1s var(--ease-apple) forwards ${1 + i * 0.1}s`;
+                nameContainer.appendChild(span);
+            });
+
+            const msg = document.getElementById('final-msg');
+            setTimeout(() => { msg.style.opacity = '1'; msg.style.transform = 'translateY(0)'; }, 2500);
+            
+            // Particles
+            const pCont = document.getElementById('particles');
+            for(let i=0; i<30; i++) {
+                const p = document.createElement('div');
+                p.className = 'particle';
+                const s = Math.random()*4+2;
+                p.style.cssText = `width:${s}px;height:${s}px;left:${Math.random()*100}%;animation-duration:${Math.random()*5+5}s;animation-delay:${Math.random()*5}s`;
+                pCont.appendChild(p);
+            }
+        }
+    </script>
+</body>
+</html>
